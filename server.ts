@@ -1,32 +1,57 @@
+#!/usr/bin/env node
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
-import { promisify } from "util";
+import { promisify, parseArgs } from "util";
+import os from "os";
 
 
 const execAsync = promisify(exec);
 
+const options = {
+  port: { 
+    type: 'string' as const, 
+    short: 'p',
+    default: '8080'
+  },
+  token: { 
+    type: 'string' as const, 
+    short: 't',
+  },
+  workspace: { 
+    type: 'string' as const, 
+    short: 'w'
+  }
+};
+
+// Parse the arguments
+const { values } = parseArgs({ options, strict: false });
 // ==========================================
 // CONFIGURATION & SANDBOXING
 // ==========================================
-const PORT = Number(process.env.PORT) || 8080;
-const AUTH_TOKEN = process.env.AUTH_TOKEN || "my-secret-key-123";
+const PORT = Number(values.port) || 8080;
+const AUTH_TOKEN = values.token as string | undefined;
 
-// Determine the allowed folder for file editing. Defaults to the current directory.
-const WORKSPACE_DIR = path.resolve("D:/learning/testing_remote_mcp" || process.cwd());
+// Determine the allowed folder for file editing. Defaults to the user's home directory.
+const WORKSPACE_DIR = path.resolve((values.workspace as string | undefined) ?? os.homedir());
 
 /**
  * Security: Ensures the AI cannot access files outside the workspace
  * (Prevents path traversal attacks like "../../windows/system32")
  */
 function resolveSafePath(userPath: string): string {
-  // Normalize and resolve the absolute path
-  const targetPath = path.resolve(WORKSPACE_DIR, userPath);
-  
-  // Verify the target path starts with the allowed workspace directory
-  if (!targetPath.startsWith(WORKSPACE_DIR)) {
+  // Resolve the path as-is — callers supply full absolute paths
+  const targetPath = path.resolve(userPath);
+
+  // Ensure targetPath is inside WORKSPACE_DIR.
+  // Append sep so "/home/user" never falsely matches "/home/username/..."
+  const safeRoot = WORKSPACE_DIR.endsWith(path.sep)
+    ? WORKSPACE_DIR
+    : WORKSPACE_DIR + path.sep;
+
+  if (!targetPath.startsWith(safeRoot) && targetPath !== WORKSPACE_DIR) {
     throw new Error(`Access Denied: Path "${userPath}" is outside the allowed workspace (${WORKSPACE_DIR})`);
   }
   return targetPath;
@@ -43,16 +68,21 @@ const server = new FastMCP({
 // ==========================================
 // AUTHENTICATION MIDDLEWARE
 // ==========================================
-// const app = server.getApp();
+const app = server.getApp();
 
-// app.use("*", async (c, next) => {
-//   const authHeader = c.req.header("Authorization");
-  
-//   if (authHeader !== `Bearer ${AUTH_TOKEN}`) {
-//     return c.text("Unauthorized: Invalid or missing API key.", 401);
-//   }
-//   await next();
-// });
+app.use("*", async (c, next) => {
+  // If no token was provided at startup, authentication is disabled
+  if (!AUTH_TOKEN) {
+    await next();
+    return;
+  }
+
+  const authHeader = c.req.header("Authorization");
+  if (authHeader !== `Bearer ${AUTH_TOKEN}`) {
+    return c.text("Unauthorized: Invalid or missing API key.", 401);
+  }
+  await next();
+});
 
 // ==========================================
 // TOOLS
@@ -299,10 +329,11 @@ server.addTool({
               const lines = content.split("\n");
               
               for (let i = 0; i < lines.length; i++) {
-                if (regex.test(lines[i])) {
+                const line = lines[i] ?? "";
+                if (regex.test(line)) {
                   // Format like grep: relative/path.ts:line_num: matching code
                   const relPath = path.relative(WORKSPACE_DIR, fullPath);
-                  results.push(`${relPath}:${i + 1}: ${lines[i].trim()}`);
+                  results.push(`${relPath}:${i + 1}: ${line.trim()}`);
                 }
               }
             } catch {

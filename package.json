@@ -1,13 +1,40 @@
 {
-  "name": "remote_mcp",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "remote-coding-mcp",
+  "version": "0.0.1",
+  "description": "A zero-config MCP server that lets any AI (Gemini, Claude, GPT) read and write code directly on your machine over the internet via ngrok or VS Code port forwarding.",
+  "main": "dist/server.js",
+  "bin": {
+    "remote-coding-mcp": "dist/server.js"
   },
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-coding",
+    "remote-mcp",
+    "filesystem-mcp",
+    "gemini",
+    "claude",
+    "openai",
+    "gpt",
+    "ai-agent",
+    "code-assistant",
+    "remote-coding",
+    "ngrok",
+    "fastmcp",
+    "llm-tools",
+    "agentic-coding"
+  ],
+  "author": "Aswinth GT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aswinthgt/remote_coding_mcp"
+  },
   "license": "ISC",
   "type": "module",
   "dependencies": {
@@ -15,6 +42,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1"
+    "@types/node": "^26.4.1",
+    "typescript": "^7.0.2"
   }
 }
