@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Coding MCP // Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --panel-bg: rgba(13, 19, 33, 0.85);
+      --panel-border: #1e293b;
+      --panel-border-bright: #334155;
+      --neon-green: #10b981;
+      --neon-green-glow: rgba(16, 185, 129, 0.25);
+      --neon-cyan: #06b6d4;
+      --neon-cyan-glow: rgba(6, 182, 212, 0.25);
+      --neon-amber: #f59e0b;
+      --neon-amber-glow: rgba(245, 158, 11, 0.25);
+      --neon-rose: #f43f5e;
+      --neon-rose-glow: rgba(244, 63, 94, 0.25);
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: 'Fira Code', monospace, monospace;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(ellipse 80% 80% at 50% -20%, rgba(6, 182, 212, 0.08), transparent),
+        radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.05), transparent);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Terminal Header Bar */
+    .top-bar {
+      background: rgba(10, 15, 26, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 6px;
+    }
+
+    .traffic-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .traffic-dot.red { background: #ef4444; }
+    .traffic-dot.yellow { background: #eab308; }
+    .traffic-dot.green { background: #22c55e; }
+
+    .brand-title {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title .prefix {
+      color: var(--neon-cyan);
+    }
+
+    .version-tag {
+      font-size: 0.7rem;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .author-badge {
+      font-size: 0.72rem;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--text-muted);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .author-badge:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green-glow);
+      color: #fff;
+    }
+
+    .author-badge strong {
+      color: var(--neon-green);
+    }
+
+    .terminal-footer {
+      background: rgba(10, 15, 26, 0.95);
+      border-top: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: auto;
+    }
+
+    .author-link {
+      color: inherit;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .author-link:hover .author-highlight {
+      color: #fff;
+      text-shadow: 0 0 8px var(--neon-cyan);
+    }
+
+    .author-highlight {
+      color: var(--neon-cyan);
+    }
+
+    .top-bar-metrics {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .metric-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--panel-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+
+    .metric-chip strong {
+      color: var(--text-main);
+    }
+
+    .live-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    .app-container {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 20px;
+      padding: 24px;
+      flex: 1;
+      max-width: 1800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1200px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panel Styles */
+    .terminal-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-header {
+      background: rgba(15, 23, 42, 0.7);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }
+
+    .panel-title .icon {
+      color: var(--neon-cyan);
+    }
+
+    /* Quick Action Buttons */
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .btn-green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+    .btn-green:hover {
+      background: rgba(16, 185, 129, 0.3);
+      border-color: #34d399;
+      box-shadow: 0 0 12px var(--neon-green-glow);
+    }
+
+    .btn-red {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.35);
+      color: #fb7185;
+    }
+    .btn-red:hover {
+      background: rgba(244, 63, 94, 0.3);
+      border-color: #fb7185;
+      box-shadow: 0 0 12px var(--neon-rose-glow);
+    }
+
+    .btn-amber {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+    }
+    .btn-amber:hover {
+      background: rgba(245, 158, 11, 0.3);
+      border-color: #fbbf24;
+      box-shadow: 0 0 12px var(--neon-amber-glow);
+    }
+
+    .btn-ghost {
+      background: rgba(30, 41, 59, 0.5);
+      border-color: var(--panel-border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover {
+      background: rgba(51, 65, 85, 0.6);
+      color: var(--text-main);
+    }
+
+    /* Filter & Search Bar */
+    .filter-bar {
+      padding: 12px 18px;
+      background: rgba(10, 15, 26, 0.5);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .category-pills {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cat-pill {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cat-pill:hover, .cat-pill.active {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 260px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--panel-border);
+      padding: 6px 12px 6px 30px;
+      border-radius: 6px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--neon-cyan);
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    /* Tools Grid */
+    .tools-list {
+      padding: 16px;
+      overflow-y: auto;
+      max-height: calc(100vh - 230px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tool-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .tool-card:hover {
+      border-color: var(--panel-border-bright);
+      background: rgba(30, 41, 59, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .tool-card.disabled {
+      opacity: 0.65;
+      border-style: dashed;
+      background: rgba(15, 23, 42, 0.25);
+    }
+
+    .tool-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tool-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .tool-name {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .badge-filesystem { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
+    .badge-search { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-system { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-git { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-general { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    .tool-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tool-stats {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Modern Glowing Toggle Switch */
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle-status-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .toggle-status-label.on {
+      color: var(--neon-green);
+    }
+
+    .toggle-status-label.off {
+      color: var(--neon-rose);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 26px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #64748b;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: rgba(16, 185, 129, 0.25);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green-glow);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+      background-color: var(--neon-green);
+      box-shadow: 0 0 8px var(--neon-green);
+    }
+
+    /* Live Terminal Console Pane */
+    .terminal-console-pane {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .console-filter-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .console-tab {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .console-tab.active {
+      color: var(--neon-cyan);
+      background: rgba(6, 182, 212, 0.15);
+    }
+
+    .terminal-console {
+      flex: 1;
+      background: #040711;
+      padding: 16px;
+      overflow-y: auto;
+      max-height: calc(100vh - 230px);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .log-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.4);
+      border-left: 3px solid var(--panel-border);
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-row.status-running {
+      border-left-color: var(--neon-cyan);
+      background: rgba(6, 182, 212, 0.06);
+    }
+    .log-row.status-success {
+      border-left-color: var(--neon-green);
+    }
+    .log-row.status-blocked {
+      border-left-color: var(--neon-rose);
+      background: rgba(244, 63, 94, 0.08);
+    }
+    .log-row.status-error {
+      border-left-color: var(--neon-rose);
+      background: rgba(244, 63, 94, 0.12);
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-time {
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }
+
+    .log-tool {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .log-badge {
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+    .log-badge.running { background: rgba(6, 182, 212, 0.2); color: var(--neon-cyan); }
+    .log-badge.success { background: rgba(16, 185, 129, 0.2); color: var(--neon-green); }
+    .log-badge.blocked { background: rgba(244, 63, 94, 0.25); color: #fb7185; }
+    .log-badge.error { background: rgba(244, 63, 94, 0.35); color: #fda4af; }
+
+    .log-duration {
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      margin-left: auto;
+    }
+
+    .log-payload {
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .empty-logs {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 240px;
+      color: var(--text-dim);
+      gap: 12px;
+    }
+
+    /* Auth Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(4, 7, 17, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 30px var(--neon-cyan-glow);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 440px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      font-family: var(--font-mono);
+    }
+
+    .modal-box h3 {
+      font-size: 1rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-box p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .modal-box input {
+      background: #040711;
+      border: 1px solid var(--panel-border-bright);
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .modal-box input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan-glow);
+    }
+
+    /* Status Banner / Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: #0f172a;
+      border: 1px solid var(--panel-border-bright);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      animation: slideIn 0.2s ease;
+      color: #fff;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="traffic-lights">
+        <span class="traffic-dot red"></span>
+        <span class="traffic-dot yellow"></span>
+        <span class="traffic-dot green"></span>
+      </div>
+      <div class="brand-title">
+        <span class="prefix">REMOTE-CODING-MCP</span> // CONTROL CENTER
+        <span class="version-tag" id="app-version">v__VERSION__</span>
+        <a href="https://aswinthgt.vercel.app/" target="_blank" rel="noopener noreferrer" class="author-badge" title="Developed by Aswinth (Portfolio)">Developed by <strong>Aswinth</strong> ↗</a>
+      </div>
+    </div>
+
+    <div class="top-bar-metrics">
+      <div class="metric-chip">
+        <span class="live-pulse"></span>
+        <span id="server-status">ONLINE</span>
+      </div>
+      <div class="metric-chip">
+        PORT: <strong id="metric-port">8080</strong>
+      </div>
+      <div class="metric-chip">
+        WORKSPACE: <strong id="metric-workspace">~</strong>
+      </div>
+      <div class="metric-chip">
+        ACTIVE CALLS: <strong id="metric-active">0</strong>
+      </div>
+      <div class="metric-chip" id="metric-clock">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- App Main Content -->
+  <main class="app-container">
+
+    <!-- Left Panel: Tools Matrix -->
+    <section class="terminal-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="icon">⚡</span> TOOL CONTROL MATRIX (<span id="tool-count">13</span>)
+        </div>
+        <div class="action-group">
+          <button class="btn btn-green" id="btn-enable-all" title="Enable all tools">
+            <span>●</span> ENABLE ALL
+          </button>
+          <button class="btn btn-red" id="btn-disable-all" title="Disable all tools">
+            <span>○</span> DISABLE ALL
+          </button>
+          <button class="btn btn-amber" id="btn-safe-mode" title="Only allow read & inspect tools">
+            <span>🛡️</span> SAFE MODE
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="category-pills">
+          <button class="cat-pill active" data-cat="all">ALL</button>
+          <button class="cat-pill" data-cat="filesystem">FILES</button>
+          <button class="cat-pill" data-cat="search">SEARCH</button>
+          <button class="cat-pill" data-cat="system">TERMINAL</button>
+          <button class="cat-pill" data-cat="git">GIT</button>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="tool-search-input" placeholder="filter tools...">
+        </div>
+      </div>
+
+      <div class="tools-list" id="tools-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Right Panel: Live Terminal Logs -->
+    <section class="terminal-panel terminal-console-pane">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="icon">📟</span> LIVE INTERCEPTION & AUDIT LOGS
+        </div>
+        <div class="action-group">
+          <div class="console-filter-tabs">
+            <button class="console-tab active" data-filter="all">ALL</button>
+            <button class="console-tab" data-filter="running">RUNNING</button>
+            <button class="console-tab" data-filter="blocked">BLOCKED</button>
+            <button class="console-tab" data-filter="error">ERRORS</button>
+          </div>
+          <button class="btn btn-ghost" id="btn-clear-logs">CLEAR</button>
+        </div>
+      </div>
+
+      <div class="terminal-console" id="console-stream">
+        <div class="empty-logs" id="empty-logs-placeholder">
+          <span>● Listening for AI agent tool invocations...</span>
+          <small>Events will appear in real time via Server-Sent Events</small>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="terminal-footer">
+    <div>● REMOTE-CODING-MCP</div>
+    <div>Developed by <a href="https://aswinthgt.vercel.app/" target="_blank" rel="noopener noreferrer" class="author-link" title="Developed by Aswinth (Portfolio)"><strong class="author-highlight">Aswinth</strong> ↗</a></div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal-box">
+      <h3>🔒 AUTHENTICATION REQUIRED</h3>
+      <p>This server was launched with Bearer Token protection. Enter your token to unlock the Control Center:</p>
+      <input type="password" id="auth-token-input" placeholder="Enter Bearer token...">
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-green" id="btn-unlock-auth">UNLOCK CONSOLE</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toasts"></div>
+
+  <script>
+    // State management
+    let currentTools = {};
+    let currentLogs = [];
+    let currentFilter = 'all';
+    let currentCategory = 'all';
+    let authToken = sessionStorage.getItem('mcp_auth_token') || (new URLSearchParams(window.location.search)).get('token') || '';
+
+    // Clock
+    setInterval(() => {
+      document.getElementById('metric-clock').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+
+    function showToast(message, color = 'var(--neon-cyan)') {
+      const container = document.getElementById('toasts');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.borderColor = color;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function getHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      return headers;
+    }
+
+    // Fetch Initial Status
+    async function fetchStatus() {
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/status${query}`, {
+          headers: getHeaders()
+        });
+
+        if (res.status === 401) {
+          document.getElementById('auth-modal').style.display = 'flex';
+          return;
+        }
+
+        const data = await res.json();
+        currentTools = data.tools;
+        currentLogs = data.logs || [];
+
+        // Update metrics
+        if (data.config) {
+          document.getElementById('metric-port').textContent = data.config.port || '8080';
+          document.getElementById('metric-workspace').textContent = data.config.workspace || '~';
+          if (data.config.version) {
+            document.getElementById('app-version').textContent = `v${data.config.version}`;
+          }
+        }
+        if (data.stats) {
+          document.getElementById('metric-active').textContent = data.stats.activeCalls || '0';
+        }
+
+        renderTools();
+        renderLogs();
+      } catch (err) {
+        console.error('Failed to fetch status:', err);
+      }
+    }
+
+    // Render Tools Matrix
+    function renderTools() {
+      const container = document.getElementById('tools-container');
+      const searchTerm = (document.getElementById('tool-search-input').value || '').toLowerCase();
+      container.innerHTML = '';
+
+      const toolKeys = Object.keys(currentTools);
+      document.getElementById('tool-count').textContent = toolKeys.length;
+
+      toolKeys.forEach(name => {
+        const tool = currentTools[name];
+        if (currentCategory !== 'all' && tool.category !== currentCategory) {
+          return;
+        }
+        if (searchTerm && !name.toLowerCase().includes(searchTerm) && !tool.description.toLowerCase().includes(searchTerm)) {
+          return;
+        }
+
+        const isEnabled = tool.enabled;
+        const card = document.createElement('div');
+        card.className = `tool-card ${isEnabled ? '' : 'disabled'}`;
+        card.id = `card-${name}`;
+
+        card.innerHTML = `
+          <div class="tool-info">
+            <div class="tool-meta-row">
+              <span class="tool-name">${name}</span>
+              <span class="badge badge-${tool.category || 'general'}">${tool.category}</span>
+              ${tool.readOnly ? '<span class="badge" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.2);">READ-ONLY</span>' : ''}
+            </div>
+            <div class="tool-desc" title="${tool.description}">${tool.description}</div>
+            <div class="tool-stats">Invocations: <strong>${tool.callCount || 0}</strong></div>
+          </div>
+          <div class="toggle-wrapper">
+            <span class="toggle-status-label ${isEnabled ? 'on' : 'off'}" id="status-label-${name}">${isEnabled ? 'ENABLED' : 'DISABLED'}</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-${name}" ${isEnabled ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+          </div>
+        `;
+
+        const checkbox = card.querySelector(`#toggle-${name}`);
+        checkbox.addEventListener('change', async (e) => {
+          const newState = e.target.checked;
+          await toggleTool(name, newState);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // Toggle Individual Tool
+    async function toggleTool(toolName, enabled) {
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/toggle${query}`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ tool: toolName, enabled })
+        });
+
+        if (res.ok) {
+          if (currentTools[toolName]) {
+            currentTools[toolName].enabled = enabled;
+          }
+          const card = document.getElementById(`card-${toolName}`);
+          const label = document.getElementById(`status-label-${toolName}`);
+          if (card && label) {
+            if (enabled) {
+              card.classList.remove('disabled');
+              label.className = 'toggle-status-label on';
+              label.textContent = 'ENABLED';
+            } else {
+              card.classList.add('disabled');
+              label.className = 'toggle-status-label off';
+              label.textContent = 'DISABLED';
+            }
+          }
+          showToast(`Tool '${toolName}' is now ${enabled ? 'ENABLED' : 'DISABLED'}`, enabled ? 'var(--neon-green)' : 'var(--neon-rose)');
+        }
+      } catch (err) {
+        console.error('Error toggling tool:', err);
+      }
+    }
+
+    // Batch Toggle
+    async function batchToggle(preset, enabled = true) {
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/toggle-all${query}`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ preset, enabled })
+        });
+
+        if (res.ok) {
+          await fetchStatus();
+          showToast(`Applied preset: ${preset.toUpperCase()}`, 'var(--neon-cyan)');
+        }
+      } catch (err) {
+        console.error('Batch toggle failed:', err);
+      }
+    }
+
+    // Render Logs
+    function renderLogs() {
+      const stream = document.getElementById('console-stream');
+      const filtered = currentLogs.filter(log => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'running') return log.status === 'running';
+        if (currentFilter === 'blocked') return log.status === 'blocked';
+        if (currentFilter === 'error') return log.status === 'error';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        stream.innerHTML = `
+          <div class="empty-logs">
+            <span>● No logs match filter '${currentFilter.toUpperCase()}'</span>
+          </div>
+        `;
+        return;
+      }
+
+      stream.innerHTML = '';
+      filtered.forEach(log => {
+        const row = document.createElement('div');
+        row.className = `log-row status-${log.status}`;
+
+        let statusText = log.status.toUpperCase();
+        if (log.status === 'blocked') statusText = 'BLOCKED (POLICY)';
+        if (log.durationMs) statusText += ` [${log.durationMs}ms]`;
+
+        const argsStr = log.args ? JSON.stringify(log.args) : '';
+        const extraText = log.resultSummary ? `→ ${log.resultSummary}` : (log.error ? `! ${log.error}` : '');
+
+        row.innerHTML = `
+          <div class="log-header">
+            <span class="log-time">${log.timestamp}</span>
+            <span class="log-tool">${log.tool}</span>
+            <span class="log-badge ${log.status}">${statusText}</span>
+          </div>
+          ${argsStr ? `<div class="log-payload">args: ${argsStr}</div>` : ''}
+          ${extraText ? `<div class="log-payload" style="color:#cbd5e1">${extraText}</div>` : ''}
+        `;
+        stream.appendChild(row);
+      });
+    }
+
+    // Connect SSE Stream
+    function connectSSE() {
+      const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+      const evtSource = new EventSource(`/control-center/api/events${query}`);
+
+      evtSource.onmessage = (e) => {
+        try {
+          const entry = JSON.parse(e.data);
+          currentLogs.unshift(entry);
+          if (currentLogs.length > 100) currentLogs.pop();
+          renderLogs();
+
+          // Refresh tool call counters
+          if (currentTools[entry.tool]) {
+            if (entry.status === 'running') {
+              currentTools[entry.tool].callCount = (currentTools[entry.tool].callCount || 0) + 1;
+            }
+          }
+        } catch (err) {
+          // ignore keep-alive
+        }
+      };
+
+      evtSource.onerror = () => {
+        evtSource.close();
+        setTimeout(connectSSE, 4000);
+      };
+    }
+
+    // Event Listeners
+    document.getElementById('btn-enable-all').onclick = () => batchToggle('all-on', true);
+    document.getElementById('btn-disable-all').onclick = () => batchToggle('all-off', false);
+    document.getElementById('btn-safe-mode').onclick = () => batchToggle('safe-mode', true);
+
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategory = btn.getAttribute('data-cat');
+        renderTools();
+      };
+    });
+
+    document.querySelectorAll('.console-tab').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.console-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderLogs();
+      };
+    });
+
+    document.getElementById('btn-clear-logs').onclick = () => {
+      currentLogs = [];
+      renderLogs();
+    };
+
+    document.getElementById('tool-search-input').oninput = () => renderTools();
+
+    document.getElementById('btn-unlock-auth').onclick = () => {
+      const val = document.getElementById('auth-token-input').value.trim();
+      if (val) {
+        authToken = val;
+        sessionStorage.setItem('mcp_auth_token', val);
+        document.getElementById('auth-modal').style.display = 'none';
+        fetchStatus();
+        connectSSE();
+      }
+    };
+
+    // Initial boot
+    fetchStatus();
+    connectSSE();
+  </script>
+</body>
+</html>

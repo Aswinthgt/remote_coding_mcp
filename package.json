@@ -7,7 +7,7 @@
     "remote-coding-mcp": "dist/server.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -rf views dist/",
     "start": "node dist/server.js",
     "dev": "tsc && node dist/server.js",
     "prepublishOnly": "npm run build"

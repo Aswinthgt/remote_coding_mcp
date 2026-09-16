@@ -50,6 +50,25 @@ npx remote-coding-mcp -p 3000 -w "D:/my-project" -t my-secret-token
 
 ---
 
+## 🎛️ Terminal Control Center
+
+Every instance includes a built-in, real-time web dashboard accessible at:
+
+```
+http://localhost:8080/control-center
+```
+
+Designed with a high-tech terminal UI, the Control Center puts you in complete control of what the AI can do on your system in real time:
+
+- **Toggle Any Tool**: Turn individual tools ON or OFF on the fly.
+- **🛡️ Safe Mode Preset**: One-click lock down — instantly disables shell execution, file deletion, and file writing tools while keeping read and search tools active.
+- **Smart Permission Interception**: If an AI agent attempts to invoke a tool you've disabled, execution is blocked and the AI receives:
+  > *"Error: The tool '\<tool\>' has been disabled by the user in the Control Center. Please ask the user for permission to enable this tool before proceeding."*
+- **Live Audit Console**: Stream real-time tool execution logs, runtime durations, call parameters, and error traces over Server-Sent Events (SSE).
+- **Secure Access**: If `--token` is set, unlock the dashboard using your Bearer token or append `?token=<your-token>`.
+
+---
+
 ## Expose to the Internet
 
 ### Option A — ngrok
@@ -135,6 +154,7 @@ The AI gets access to these tools on your machine:
 - The AI can **only access files inside the `--workspace` directory** — path traversal attacks are blocked.
 - Pass `--token` to require a `Bearer` token on every request.
 - Without `--token`, the server accepts all requests (fine for local/trusted networks).
+- **Fine-Grained Tool Permissions**: Use the Control Center (`/control-center`) to toggle high-risk tools (e.g. `execute_command` or `delete_file`) on/off or activate **Safe Mode** anytime.
 
 ---
 
