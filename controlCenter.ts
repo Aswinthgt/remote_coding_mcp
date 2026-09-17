@@ -2,7 +2,7 @@ import type { Hono } from "hono";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { PORT, WORKSPACE_DIR, AUTH_TOKEN } from "./config.js";
+import { PORT, AUTH_TOKEN } from "./config.js";
 import {
   toolStates,
   toolMetadata,
@@ -13,6 +13,13 @@ import {
   setAllToolStates,
   applySafeMode,
 } from "./toolControl.js";
+import {
+  getPrimaryWorkspace,
+  getAdditionalWorkspaces,
+  getAllWorkspaces,
+  addWorkspace,
+  removeWorkspace,
+} from "./workspaceManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -100,16 +107,81 @@ export function registerControlCenter(app: Hono): void {
       tools: combinedTools,
       stats: toolStats,
       logs: toolLogs,
+      workspaces: {
+        primary: getPrimaryWorkspace(),
+        additional: getAdditionalWorkspaces(),
+        all: getAllWorkspaces(),
+      },
       config: {
         port: PORT,
-        workspace: WORKSPACE_DIR,
+        workspace: getPrimaryWorkspace(),
         hasAuth: Boolean(AUTH_TOKEN),
         version,
       },
     });
   });
 
-  // 3. Toggle individual tool state
+  // 3. Workspaces Management APIs
+  app.get("/control-center/api/workspaces", (c) => {
+    return c.json({
+      primary: getPrimaryWorkspace(),
+      additional: getAdditionalWorkspaces(),
+      all: getAllWorkspaces(),
+    });
+  });
+
+  app.post("/control-center/api/workspaces", async (c) => {
+    try {
+      const body = await c.req.json();
+      const { path: dirPath } = body;
+
+      if (!dirPath || typeof dirPath !== "string") {
+        return c.json({ error: "Directory path is required." }, 400);
+      }
+
+      const result = await addWorkspace(dirPath);
+      if (!result.success) {
+        return c.json({ error: result.error }, 400);
+      }
+
+      return c.json({
+        success: true,
+        path: result.path,
+        primary: getPrimaryWorkspace(),
+        additional: getAdditionalWorkspaces(),
+        all: getAllWorkspaces(),
+      });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  });
+
+  app.delete("/control-center/api/workspaces", async (c) => {
+    try {
+      const body = await c.req.json();
+      const { path: dirPath } = body;
+
+      if (!dirPath || typeof dirPath !== "string") {
+        return c.json({ error: "Directory path is required." }, 400);
+      }
+
+      const result = removeWorkspace(dirPath);
+      if (!result.success) {
+        return c.json({ error: result.error }, 400);
+      }
+
+      return c.json({
+        success: true,
+        primary: getPrimaryWorkspace(),
+        additional: getAdditionalWorkspaces(),
+        all: getAllWorkspaces(),
+      });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  });
+
+  // 4. Toggle individual tool state
   app.post("/control-center/api/toggle", async (c) => {
     try {
       const body = await c.req.json();
@@ -130,7 +202,7 @@ export function registerControlCenter(app: Hono): void {
     }
   });
 
-  // 4. Batch toggle or apply presets
+  // 5. Batch toggle or apply presets
   app.post("/control-center/api/toggle-all", async (c) => {
     try {
       const body = await c.req.json();
@@ -150,11 +222,12 @@ export function registerControlCenter(app: Hono): void {
     }
   });
 
-  // 5. Server-Sent Events (SSE) Stream for real-time live logs and tool state
+  // 6. Server-Sent Events (SSE) Stream for real-time live logs, tool state, and workspaces
   app.get("/control-center/api/events", (c) => {
     let timer: NodeJS.Timeout | undefined;
     let listener: ((event: any) => void) | undefined;
     let stateListener: ((event: any) => void) | undefined;
+    let workspaceListener: ((event: any) => void) | undefined;
 
     const stream = new ReadableStream({
       start(controller) {
@@ -176,8 +249,17 @@ export function registerControlCenter(app: Hono): void {
           }
         };
 
+        workspaceListener = (event: any) => {
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "workspaceChange", ...event })}\n\n`));
+          } catch {
+            // Connection closed
+          }
+        };
+
         controlCenterEvents.on("log", listener);
         controlCenterEvents.on("stateChange", stateListener);
+        controlCenterEvents.on("workspaceChange", workspaceListener);
 
         // Keep-alive heartbeat every 15 seconds
         timer = setInterval(() => {
@@ -192,6 +274,7 @@ export function registerControlCenter(app: Hono): void {
         if (timer) clearInterval(timer);
         if (listener) controlCenterEvents.off("log", listener);
         if (stateListener) controlCenterEvents.off("stateChange", stateListener);
+        if (workspaceListener) controlCenterEvents.off("workspaceChange", workspaceListener);
       },
     });
 

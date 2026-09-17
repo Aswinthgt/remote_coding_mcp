@@ -61,6 +61,7 @@ http://localhost:8080/control-center
 Designed with a high-tech terminal UI, the Control Center puts you in complete control of what the AI can do on your system in real time:
 
 - **Toggle Any Tool**: Turn individual tools ON or OFF on the fly.
+- **📁 Multi-Workspace Manager**: Authorize additional folders or project directories dynamically without restarting the server. Primary workspace remains permanently protected.
 - **🛡️ Safe Mode Preset**: One-click lock down — instantly disables shell execution, file deletion, and file writing tools while keeping read and search tools active.
 - **Smart Permission Interception**: If an AI agent attempts to invoke a tool you've disabled, execution is blocked and the AI receives:
   > *"Error: The tool '\<tool\>' has been disabled by the user in the Control Center. Please ask the user for permission to enable this tool before proceeding."*
@@ -133,6 +134,7 @@ The AI gets access to these tools on your machine:
 
 | Tool | Description |
 |------|-------------|
+| `available_directories` | List all authorized workspace directories (primary + dynamic) |
 | `list_directory` | List files and folders |
 | `read_file` | Read a file (with optional line range) |
 | `write_file` | Create or overwrite a file |
@@ -141,17 +143,17 @@ The AI gets access to these tools on your machine:
 | `insert_at_line` | Insert text at a specific line |
 | `delete_file` | Delete a file |
 | `rename_file` | Rename or move a file |
-| `execute_command` | Run a shell command (30s timeout) |
+| `execute_command` | Run a shell command in workspace (supports optional `cwd`) |
 | `grep_search` | Search for a pattern across files |
 | `search_files_by_name` | Find files by name or extension |
 | `get_file_info` | Get file size, line count, last modified |
-| `git_diff` | View uncommitted git changes |
+| `git_diff` | View uncommitted git changes (supports optional `cwd`) |
 
 ---
 
 ## Security
 
-- The AI can **only access files inside the `--workspace` directory** — path traversal attacks are blocked.
+- The AI can **only access files inside approved workspace directories** (primary + added workspaces) — path traversal attacks are blocked.
 - Pass `--token` to require a `Bearer` token on every request.
 - Without `--token`, the server accepts all requests (fine for local/trusted networks).
 - **Fine-Grained Tool Permissions**: Use the Control Center (`/control-center`) to toggle high-risk tools (e.g. `execute_command` or `delete_file`) on/off or activate **Safe Mode** anytime.

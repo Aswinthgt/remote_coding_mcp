@@ -2,8 +2,7 @@ import type { FastMCP } from "fastmcp";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { WORKSPACE_DIR } from "../config.js";
-import { resolveSafePath } from "../utils.js";
+import { resolveSafePath, getMatchingWorkspace } from "../utils.js";
 
 export function registerSearchFilesByNameTool(server: FastMCP) {
   server.addTool({
@@ -11,7 +10,7 @@ export function registerSearchFilesByNameTool(server: FastMCP) {
     description: "Quickly find file paths by filename or extension. Essential for locating files in large projects.",
     parameters: z.object({
       pattern: z.string().describe("Part of the filename or extension to match (e.g., '.test.ts', 'config')"),
-      dirPath: z.string().optional().describe("Directory to start search (defaults to root)"),
+      dirPath: z.string().optional().describe("Directory to start search (defaults to primary workspace)"),
     }),
     execute: async ({ pattern, dirPath = "." }) => {
       try {
@@ -28,7 +27,8 @@ export function registerSearchFilesByNameTool(server: FastMCP) {
             if (entry.isDirectory()) {
               await search(fullPath);
             } else if (entry.name.toLowerCase().includes(pattern.toLowerCase())) {
-              results.push(path.relative(WORKSPACE_DIR, fullPath));
+              const baseWorkspace = getMatchingWorkspace(fullPath);
+              results.push(path.relative(baseWorkspace, fullPath));
             }
           }
         }

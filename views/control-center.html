@@ -34,6 +34,73 @@
       padding: 0;
     }
 
+    /* ============================================================
+       RETRO TERMINAL CUSTOM SCROLLBARS
+       ============================================================ */
+    /* Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(6, 182, 212, 0.35) rgba(10, 15, 26, 0.7);
+    }
+
+    /* WebKit & Chromium Browsers (Chrome, Edge, Brave, VS Code) */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(7, 10, 18, 0.85);
+      border-left: 1px solid rgba(30, 41, 59, 0.35);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan-glow);
+      border-color: #67e8f9;
+    }
+
+    ::-webkit-scrollbar-thumb:active {
+      background: var(--neon-green);
+      box-shadow: 0 0 12px var(--neon-green), 0 0 24px var(--neon-green-glow);
+      border-color: #6ee7b7;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: rgba(7, 10, 18, 0.95);
+    }
+
+    /* Terminal Console Scrollbar Accent */
+    .terminal-console::-webkit-scrollbar-track {
+      background: rgba(4, 7, 17, 0.95);
+      border-left: 1px solid rgba(6, 182, 212, 0.15);
+    }
+
+    .terminal-console::-webkit-scrollbar-thumb {
+      background: rgba(6, 182, 212, 0.25);
+      border: 1px solid rgba(6, 182, 212, 0.45);
+      box-shadow: 0 0 6px rgba(6, 182, 212, 0.15);
+    }
+
+    .terminal-console::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    /* Tool List & Workspace Scrollbar Track */
+    .tools-list::-webkit-scrollbar-track,
+    .workspace-list::-webkit-scrollbar-track {
+      background: rgba(13, 19, 33, 0.6);
+      border-left: 1px solid rgba(30, 41, 59, 0.4);
+    }
+
     body {
       background-color: var(--bg-dark);
       background-image: 
@@ -546,6 +613,20 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 550px;
+      background: #040711;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .terminal-console-pane.pinned {
+      position: sticky;
+      top: 76px;
+      height: calc(100vh - 96px);
+      max-height: calc(100vh - 96px);
     }
 
     .console-filter-tabs {
@@ -562,6 +643,10 @@
       border: none;
       color: var(--text-dim);
       cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .console-tab:hover {
+      color: var(--text-main);
     }
     .console-tab.active {
       color: var(--neon-cyan);
@@ -570,27 +655,34 @@
 
     .terminal-console {
       flex: 1;
-      background: #040711;
+      background: transparent;
       padding: 16px;
       overflow-y: auto;
-      max-height: calc(100vh - 230px);
       font-family: var(--font-mono);
       font-size: 0.78rem;
       display: flex;
       flex-direction: column;
       gap: 8px;
       position: relative;
+      min-height: 0;
     }
 
     .log-row {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      padding: 8px 10px;
+      padding: 10px 12px;
       border-radius: 6px;
-      background: rgba(15, 23, 42, 0.4);
+      background: rgba(15, 23, 42, 0.5);
       border-left: 3px solid var(--panel-border);
       animation: fadeIn 0.15s ease;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .log-row:hover {
+      background: rgba(30, 41, 59, 0.5);
+      border-color: var(--panel-border-bright);
     }
 
     @keyframes fadeIn {
@@ -600,7 +692,8 @@
 
     .log-row.status-running {
       border-left-color: var(--neon-cyan);
-      background: rgba(6, 182, 212, 0.06);
+      background: rgba(6, 182, 212, 0.08);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.1);
     }
     .log-row.status-success {
       border-left-color: var(--neon-green);
@@ -632,14 +725,24 @@
 
     .log-badge {
       font-size: 0.65rem;
-      padding: 1px 5px;
+      padding: 2px 6px;
       border-radius: 3px;
       font-weight: 700;
+      letter-spacing: 0.02em;
     }
-    .log-badge.running { background: rgba(6, 182, 212, 0.2); color: var(--neon-cyan); }
-    .log-badge.success { background: rgba(16, 185, 129, 0.2); color: var(--neon-green); }
-    .log-badge.blocked { background: rgba(244, 63, 94, 0.25); color: #fb7185; }
-    .log-badge.error { background: rgba(244, 63, 94, 0.35); color: #fda4af; }
+    .log-badge.running {
+      background: rgba(6, 182, 212, 0.25);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      animation: pulseRunning 1.2s infinite ease-in-out;
+    }
+    @keyframes pulseRunning {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .log-badge.success { background: rgba(16, 185, 129, 0.2); color: var(--neon-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .log-badge.blocked { background: rgba(244, 63, 94, 0.25); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+    .log-badge.error { background: rgba(244, 63, 94, 0.35); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.5); }
 
     .log-duration {
       color: var(--text-dim);
@@ -650,11 +753,24 @@
     .log-payload {
       color: var(--text-muted);
       font-size: 0.74rem;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 8px;
       border-radius: 4px;
       white-space: pre-wrap;
       word-break: break-all;
+    }
+
+    .log-expand-detail {
+      margin-top: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px dashed var(--panel-border-bright);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      color: #94a3b8;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
     }
 
     .empty-logs {
@@ -662,9 +778,43 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 240px;
+      flex: 1;
+      min-height: 280px;
       color: var(--text-dim);
-      gap: 12px;
+      gap: 10px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .radar-pulse {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px dashed rgba(6, 182, 212, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+      animation: radarRotate 10s linear infinite;
+    }
+
+    @keyframes radarRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .radar-core {
+      width: 10px;
+      height: 10px;
+      background: var(--neon-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    .tool-card.active-running {
+      border-color: var(--neon-cyan) !important;
+      background: rgba(6, 182, 212, 0.12) !important;
+      box-shadow: 0 0 16px var(--neon-cyan-glow) !important;
     }
 
     /* Auth Modal */
@@ -750,6 +900,148 @@
       from { transform: translateX(30px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
+
+    /* Workspace Directory Manager Styles */
+    .left-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .workspace-panel {
+      overflow: hidden;
+    }
+
+    .workspace-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .workspace-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .workspace-card:hover {
+      border-color: var(--panel-border-bright);
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .workspace-card.primary-card {
+      border-left: 3px solid var(--neon-amber);
+    }
+
+    .workspace-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .workspace-path {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .workspace-path .path-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .workspace-hint {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .workspace-empty-hint {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      padding: 10px;
+      text-align: center;
+      font-style: italic;
+    }
+
+    .workspace-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .workspace-badge.primary {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--neon-amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .workspace-badge.additional {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--neon-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .workspace-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-remove-ws {
+      padding: 3px 8px;
+      font-size: 0.68rem;
+    }
+
+    .workspace-add-bar {
+      padding: 10px 16px;
+      background: rgba(10, 15, 26, 0.6);
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .prompt-prefix {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--neon-cyan);
+      white-space: nowrap;
+    }
+
+    .workspace-add-bar input {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--panel-border);
+      padding: 6px 10px;
+      border-radius: 4px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      outline: none;
+    }
+
+    .workspace-add-bar input:focus {
+      border-color: var(--neon-cyan);
+    }
   </style>
 </head>
 <body>
@@ -778,7 +1070,7 @@
         PORT: <strong id="metric-port">8080</strong>
       </div>
       <div class="metric-chip">
-        WORKSPACE: <strong id="metric-workspace">~</strong>
+        WORKSPACES: <strong id="metric-workspace">1 ACTIVE</strong>
       </div>
       <div class="metric-chip">
         ACTIVE CALLS: <strong id="metric-active">0</strong>
@@ -790,47 +1082,68 @@
   <!-- App Main Content -->
   <main class="app-container">
 
-    <!-- Left Panel: Tools Matrix -->
-    <section class="terminal-panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span class="icon">⚡</span> TOOL CONTROL MATRIX (<span id="tool-count">13</span>)
-        </div>
-        <div class="action-group">
-          <button class="btn btn-green" id="btn-enable-all" title="Enable all tools">
-            <span>●</span> ENABLE ALL
-          </button>
-          <button class="btn btn-red" id="btn-disable-all" title="Disable all tools">
-            <span>○</span> DISABLE ALL
-          </button>
-          <button class="btn btn-amber" id="btn-safe-mode" title="Only allow read & inspect tools">
-            <span>🛡️</span> SAFE MODE
-          </button>
-        </div>
-      </div>
-
-      <div class="filter-bar">
-        <div class="category-pills">
-          <button class="cat-pill active" data-cat="all">ALL</button>
-          <button class="cat-pill" data-cat="filesystem">FILES</button>
-          <button class="cat-pill" data-cat="search">SEARCH</button>
-          <button class="cat-pill" data-cat="system">TERMINAL</button>
-          <button class="cat-pill" data-cat="git">GIT</button>
+    <div class="left-column">
+      <!-- Workspace Directory Sandbox Manager -->
+      <section class="terminal-panel workspace-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="icon">📁</span> WORKSPACE DIRECTORIES (<span id="workspace-count">1</span>)
+          </div>
         </div>
 
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="tool-search-input" placeholder="filter tools...">
+        <div class="workspace-list" id="workspaces-list">
+          <!-- Injected via JavaScript -->
         </div>
-      </div>
 
-      <div class="tools-list" id="tools-container">
-        <!-- Injected via JavaScript -->
-      </div>
-    </section>
+        <form class="workspace-add-bar" id="form-add-workspace">
+          <span class="prompt-prefix">remote-mcp:~$ add-dir</span>
+          <input type="text" id="workspace-path-input" placeholder="/absolute/path/to/folder or ~/folder..." autocomplete="off" />
+          <button type="button" class="btn btn-green" id="btn-add-workspace">+ ADD DIRECTORY</button>
+        </form>
+      </section>
+
+      <!-- Tools Matrix -->
+      <section class="terminal-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="icon">⚡</span> TOOL CONTROL MATRIX (<span id="tool-count">14</span>)
+          </div>
+          <div class="action-group">
+            <button class="btn btn-green" id="btn-enable-all" title="Enable all tools">
+              <span>●</span> ENABLE ALL
+            </button>
+            <button class="btn btn-red" id="btn-disable-all" title="Disable all tools">
+              <span>○</span> DISABLE ALL
+            </button>
+            <button class="btn btn-amber" id="btn-safe-mode" title="Only allow read & inspect tools">
+              <span>🛡️</span> SAFE MODE
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="category-pills">
+            <button class="cat-pill active" data-cat="all">ALL</button>
+            <button class="cat-pill" data-cat="filesystem">FILES</button>
+            <button class="cat-pill" data-cat="search">SEARCH</button>
+            <button class="cat-pill" data-cat="system">TERMINAL</button>
+            <button class="cat-pill" data-cat="git">GIT</button>
+          </div>
+
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="tool-search-input" placeholder="filter tools...">
+          </div>
+        </div>
+
+        <div class="tools-list" id="tools-container">
+          <!-- Injected via JavaScript -->
+        </div>
+      </section>
+    </div>
 
     <!-- Right Panel: Live Terminal Logs -->
-    <section class="terminal-panel terminal-console-pane">
+    <section class="terminal-panel terminal-console-pane" id="terminal-console-pane">
       <div class="panel-header">
         <div class="panel-title">
           <span class="icon">📟</span> LIVE INTERCEPTION & AUDIT LOGS
@@ -842,14 +1155,18 @@
             <button class="console-tab" data-filter="blocked">BLOCKED</button>
             <button class="console-tab" data-filter="error">ERRORS</button>
           </div>
+          <button class="btn btn-ghost" id="btn-toggle-pin" title="Toggle between locking console to viewport and expanding to match left side height">
+            <span id="pin-icon">📌</span> <span id="pin-label">PIN VIEWPORT</span>
+          </button>
           <button class="btn btn-ghost" id="btn-clear-logs">CLEAR</button>
         </div>
       </div>
 
       <div class="terminal-console" id="console-stream">
         <div class="empty-logs" id="empty-logs-placeholder">
-          <span>● Listening for AI agent tool invocations...</span>
-          <small>Events will appear in real time via Server-Sent Events</small>
+          <div class="radar-pulse"><div class="radar-core"></div></div>
+          <span style="color:var(--neon-cyan); font-weight:600; letter-spacing:0.04em;">● LISTENING FOR MCP TOOL INVOCATIONS</span>
+          <small style="color:var(--text-dim); max-width:320px; line-height:1.5;">Connect Claude Desktop, Cursor, or Antigravity to <code>/mcp</code>. Live tool execution logs will stream here.</small>
         </div>
       </div>
     </section>
@@ -880,6 +1197,7 @@
     // State management
     let currentTools = {};
     let currentLogs = [];
+    let currentWorkspaces = { primary: '', additional: [], all: [] };
     let currentFilter = 'all';
     let currentCategory = 'all';
     let authToken = sessionStorage.getItem('mcp_auth_token') || (new URLSearchParams(window.location.search)).get('token') || '';
@@ -927,11 +1245,14 @@
         const data = await res.json();
         currentTools = data.tools;
         currentLogs = data.logs || [];
+        if (data.workspaces) {
+          currentWorkspaces = data.workspaces;
+          renderWorkspaces();
+        }
 
         // Update metrics
         if (data.config) {
           document.getElementById('metric-port').textContent = data.config.port || '8080';
-          document.getElementById('metric-workspace').textContent = data.config.workspace || '~';
           if (data.config.version) {
             document.getElementById('app-version').textContent = `v${data.config.version}`;
           }
@@ -1053,6 +1374,8 @@
     }
 
     // Render Logs
+    let expandedLogId = null;
+
     function renderLogs() {
       const stream = document.getElementById('console-stream');
       const filtered = currentLogs.filter(log => {
@@ -1064,11 +1387,22 @@
       });
 
       if (filtered.length === 0) {
-        stream.innerHTML = `
-          <div class="empty-logs">
-            <span>● No logs match filter '${currentFilter.toUpperCase()}'</span>
-          </div>
-        `;
+        if (currentLogs.length === 0) {
+          stream.innerHTML = `
+            <div class="empty-logs">
+              <div class="radar-pulse"><div class="radar-core"></div></div>
+              <span style="color:var(--neon-cyan); font-weight:600; letter-spacing:0.04em;">● LISTENING FOR MCP TOOL INVOCATIONS</span>
+              <small style="color:var(--text-dim); max-width:320px; line-height:1.5;">Connect Claude Desktop, Cursor, or Antigravity to <code>/mcp</code>. Live tool execution logs will stream here.</small>
+            </div>
+          `;
+        } else {
+          stream.innerHTML = `
+            <div class="empty-logs">
+              <span style="color:var(--text-muted); font-size:0.85rem;">● No logs match filter '${currentFilter.toUpperCase()}'</span>
+              <small style="color:var(--text-dim)">Switch to 'ALL' to view all ${currentLogs.length} logged events</small>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -1076,23 +1410,41 @@
       filtered.forEach(log => {
         const row = document.createElement('div');
         row.className = `log-row status-${log.status}`;
+        row.title = "Click to inspect full parameters and response";
 
         let statusText = log.status.toUpperCase();
+        if (log.status === 'running') statusText = 'RUNNING...';
         if (log.status === 'blocked') statusText = 'BLOCKED (POLICY)';
         if (log.durationMs) statusText += ` [${log.durationMs}ms]`;
 
         const argsStr = log.args ? JSON.stringify(log.args) : '';
         const extraText = log.resultSummary ? `→ ${log.resultSummary}` : (log.error ? `! ${log.error}` : '');
+        const isExpanded = expandedLogId === log.id;
 
         row.innerHTML = `
           <div class="log-header">
             <span class="log-time">${log.timestamp}</span>
             <span class="log-tool">${log.tool}</span>
             <span class="log-badge ${log.status}">${statusText}</span>
+            <span class="log-duration">${log.durationMs ? log.durationMs + 'ms' : (log.status === 'running' ? 'active' : '')}</span>
           </div>
           ${argsStr ? `<div class="log-payload">args: ${argsStr}</div>` : ''}
           ${extraText ? `<div class="log-payload" style="color:#cbd5e1">${extraText}</div>` : ''}
+          ${isExpanded ? `
+            <div class="log-expand-detail">
+              <div style="color:var(--neon-cyan); margin-bottom:4px;"><strong>// FULL PARAMETERS:</strong></div>
+              <pre>${JSON.stringify(log.args || {}, null, 2)}</pre>
+              ${log.resultSummary ? `<div style="color:var(--neon-green); margin-top:6px; margin-bottom:4px;"><strong>// RESPONSE SUMMARY:</strong></div><div>${log.resultSummary}</div>` : ''}
+              ${log.error ? `<div style="color:var(--neon-rose); margin-top:6px; margin-bottom:4px;"><strong>// ERROR:</strong></div><div>${log.error}</div>` : ''}
+            </div>
+          ` : ''}
         `;
+
+        row.onclick = () => {
+          expandedLogId = (expandedLogId === log.id) ? null : log.id;
+          renderLogs();
+        };
+
         stream.appendChild(row);
       });
     }
@@ -1105,16 +1457,56 @@
       evtSource.onmessage = (e) => {
         try {
           const entry = JSON.parse(e.data);
-          currentLogs.unshift(entry);
-          if (currentLogs.length > 100) currentLogs.pop();
-          renderLogs();
+          if (entry.type === 'workspaceChange') {
+            fetchWorkspaces();
+            return;
+          }
+          if (entry.type === 'stateChange') {
+            fetchStatus();
+            return;
+          }
 
-          // Refresh tool call counters
-          if (currentTools[entry.tool]) {
-            if (entry.status === 'running') {
-              currentTools[entry.tool].callCount = (currentTools[entry.tool].callCount || 0) + 1;
+          // Check if this log entry already exists (running -> success/error)
+          const existingIdx = currentLogs.findIndex(l => l.id === entry.id);
+          if (existingIdx !== -1) {
+            currentLogs[existingIdx] = entry;
+          } else {
+            currentLogs.unshift(entry);
+            if (currentLogs.length > 100) currentLogs.pop();
+          }
+
+          // Dynamically update Active Calls in top bar
+          if (entry.stats) {
+            const activeMetric = document.getElementById('metric-active');
+            if (activeMetric) activeMetric.textContent = entry.stats.activeCalls ?? '0';
+          }
+
+          // Dynamically update tool invocation count on the tool card
+          if (entry.tool) {
+            if (currentTools[entry.tool]) {
+              if (entry.callCount !== undefined) {
+                currentTools[entry.tool].callCount = entry.callCount;
+              } else if (entry.status === 'running') {
+                currentTools[entry.tool].callCount = (currentTools[entry.tool].callCount || 0) + 1;
+              }
+            }
+            const countEl = document.querySelector(`#card-${entry.tool} .tool-stats strong`);
+            if (countEl && currentTools[entry.tool]) {
+              countEl.textContent = currentTools[entry.tool].callCount;
+            }
+
+            // Visual active pulse on the tool card
+            const cardEl = document.getElementById(`card-${entry.tool}`);
+            if (cardEl) {
+              if (entry.status === 'running') {
+                cardEl.classList.add('active-running');
+              } else {
+                cardEl.classList.remove('active-running');
+              }
             }
           }
+
+          renderLogs();
         } catch (err) {
           // ignore keep-alive
         }
@@ -1124,6 +1516,133 @@
         evtSource.close();
         setTimeout(connectSSE, 4000);
       };
+    }
+
+    // Workspace management logic
+    async function fetchWorkspaces() {
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/workspaces${query}`, {
+          headers: getHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentWorkspaces = data;
+          renderWorkspaces();
+        }
+      } catch (err) {
+        console.error('Failed to fetch workspaces:', err);
+      }
+    }
+
+    function renderWorkspaces() {
+      const listEl = document.getElementById('workspaces-list');
+      const countEl = document.getElementById('workspace-count');
+      const metricEl = document.getElementById('metric-workspace');
+
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      const totalCount = currentWorkspaces.all ? currentWorkspaces.all.length : 1;
+      if (countEl) countEl.textContent = totalCount;
+      if (metricEl) {
+        metricEl.textContent = `${totalCount} ACTIVE`;
+        metricEl.title = `Primary:\n${currentWorkspaces.primary}\n\nAdditional:\n${(currentWorkspaces.additional || []).join('\n') || 'None'}`;
+      }
+
+      // 1. Primary workspace card (Locked)
+      const primaryCard = document.createElement('div');
+      primaryCard.className = 'workspace-card primary-card';
+      primaryCard.innerHTML = `
+        <div class="workspace-info">
+          <div class="workspace-path">
+            <span class="ws-icon">🔒</span>
+            <span class="path-text" title="${currentWorkspaces.primary}">${currentWorkspaces.primary}</span>
+          </div>
+          <div class="workspace-hint">Default root for relative paths and terminal commands (Permanent)</div>
+        </div>
+        <div class="workspace-actions">
+          <span class="workspace-badge primary">PRIMARY / LOCKED</span>
+        </div>
+      `;
+      listEl.appendChild(primaryCard);
+
+      // 2. Additional workspaces
+      const additionals = currentWorkspaces.additional || [];
+      if (additionals.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'workspace-empty-hint';
+        emptyDiv.textContent = 'No additional workspaces added. AI is restricted to the primary workspace.';
+        listEl.appendChild(emptyDiv);
+      } else {
+        additionals.forEach(dirPath => {
+          const card = document.createElement('div');
+          card.className = 'workspace-card';
+          card.innerHTML = `
+            <div class="workspace-info">
+              <div class="workspace-path">
+                <span class="ws-icon">📁</span>
+                <span class="path-text" title="${dirPath}">${dirPath}</span>
+              </div>
+              <div class="workspace-hint">Full read, write, search, and execution permissions</div>
+            </div>
+            <div class="workspace-actions">
+              <span class="workspace-badge additional">AUTHORIZED</span>
+              <button class="btn btn-red btn-remove-ws" title="Remove workspace">✕ REMOVE</button>
+            </div>
+          `;
+          card.querySelector('.btn-remove-ws').onclick = async () => {
+            await removeWorkspace(dirPath);
+          };
+          listEl.appendChild(card);
+        });
+      }
+    }
+
+    async function addWorkspace(dirPath) {
+      if (!dirPath || !dirPath.trim()) return;
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/workspaces${query}`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ path: dirPath.trim() })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentWorkspaces.additional = data.additional;
+          currentWorkspaces.all = data.all;
+          renderWorkspaces();
+          showToast(`Added workspace: ${data.path}`, 'var(--neon-green)');
+          document.getElementById('workspace-path-input').value = '';
+        } else {
+          showToast(`Error: ${data.error || 'Failed to add workspace'}`, 'var(--neon-rose)');
+        }
+      } catch (err) {
+        showToast(`Error adding workspace: ${err.message}`, 'var(--neon-rose)');
+      }
+    }
+
+    async function removeWorkspace(dirPath) {
+      try {
+        const query = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+        const res = await fetch(`/control-center/api/workspaces${query}`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+          body: JSON.stringify({ path: dirPath })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentWorkspaces.additional = data.additional;
+          currentWorkspaces.all = data.all;
+          renderWorkspaces();
+          showToast(`Removed workspace: ${dirPath}`, 'var(--neon-amber)');
+        } else {
+          showToast(`Error: ${data.error || 'Failed to remove workspace'}`, 'var(--neon-rose)');
+        }
+      } catch (err) {
+        showToast(`Error removing workspace: ${err.message}`, 'var(--neon-rose)');
+      }
     }
 
     // Event Listeners
@@ -1149,12 +1668,61 @@
       };
     });
 
+    // Pin / Expand Console Toggle
+    const paneEl = document.getElementById('terminal-console-pane');
+    const pinBtn = document.getElementById('btn-toggle-pin');
+    const pinIcon = document.getElementById('pin-icon');
+    const pinLabel = document.getElementById('pin-label');
+
+    let isPinned = localStorage.getItem('mcp_console_pinned') === 'true';
+    function applyPinState() {
+      if (!paneEl || !pinBtn) return;
+      if (isPinned) {
+        paneEl.classList.add('pinned');
+        pinIcon.textContent = '↕';
+        pinLabel.textContent = 'MATCH HEIGHT';
+        pinBtn.title = "Switch to matching the full left side height";
+      } else {
+        paneEl.classList.remove('pinned');
+        pinIcon.textContent = '📌';
+        pinLabel.textContent = 'PIN VIEWPORT';
+        pinBtn.title = "Lock console to screen viewport while scrolling";
+      }
+    }
+    applyPinState();
+
+    if (pinBtn) {
+      pinBtn.onclick = () => {
+        isPinned = !isPinned;
+        localStorage.setItem('mcp_console_pinned', String(isPinned));
+        applyPinState();
+      };
+    }
+
     document.getElementById('btn-clear-logs').onclick = () => {
       currentLogs = [];
       renderLogs();
     };
 
     document.getElementById('tool-search-input').oninput = () => renderTools();
+
+    const triggerAddWorkspace = () => {
+      const input = document.getElementById('workspace-path-input');
+      const val = input.value.trim();
+      if (val) {
+        addWorkspace(val);
+      }
+    };
+
+    document.getElementById('form-add-workspace').onsubmit = (e) => {
+      e.preventDefault();
+      triggerAddWorkspace();
+    };
+
+    document.getElementById('btn-add-workspace').onclick = (e) => {
+      e.preventDefault();
+      triggerAddWorkspace();
+    };
 
     document.getElementById('btn-unlock-auth').onclick = () => {
       const val = document.getElementById('auth-token-input').value.trim();

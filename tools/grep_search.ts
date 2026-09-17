@@ -2,8 +2,7 @@ import type { FastMCP } from "fastmcp";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { WORKSPACE_DIR } from "../config.js";
-import { resolveSafePath } from "../utils.js";
+import { resolveSafePath, getMatchingWorkspace } from "../utils.js";
 
 export function registerGrepSearchTool(server: FastMCP) {
   server.addTool({
@@ -11,7 +10,7 @@ export function registerGrepSearchTool(server: FastMCP) {
     description: "Search for a regex or text pattern inside files in the workspace. Skips node_modules and .git automatically.",
     parameters: z.object({
       pattern: z.string().describe("The text or regex pattern to search for"),
-      dirPath: z.string().optional().describe("Directory to search in (defaults to root workspace)"),
+      dirPath: z.string().optional().describe("Directory to search in (defaults to primary workspace)"),
       fileExtension: z.string().optional().describe("Filter by file extension (e.g., '.ts', '.md')"),
     }),
     execute: async ({ pattern, dirPath = ".", fileExtension }) => {
@@ -45,7 +44,8 @@ export function registerGrepSearchTool(server: FastMCP) {
                   const line = lines[i] ?? "";
                   if (regex.test(line)) {
                     // Format like grep: relative/path.ts:line_num: matching code
-                    const relPath = path.relative(WORKSPACE_DIR, fullPath);
+                    const baseWorkspace = getMatchingWorkspace(fullPath);
+                    const relPath = path.relative(baseWorkspace, fullPath);
                     results.push(`${relPath}:${i + 1}: ${line.trim()}`);
                   }
                 }

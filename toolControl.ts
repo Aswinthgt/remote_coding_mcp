@@ -35,6 +35,7 @@ export const toolStates: Record<string, boolean> = {
   get_file_info: true,
   insert_at_line: true,
   git_diff: true,
+  available_directories: true,
 };
 
 // Tool metadata catalogue
@@ -130,6 +131,13 @@ export const toolMetadata: Record<string, ToolMetadata> = {
     readOnly: true,
     callCount: 0,
   },
+  available_directories: {
+    name: "available_directories",
+    description: "List all allowed workspace directories that the AI is authorized to access and modify.",
+    category: "filesystem",
+    readOnly: true,
+    callCount: 0,
+  },
 };
 
 // In-memory log buffer (maximum 100 entries)
@@ -151,11 +159,20 @@ export const toolStats = {
 };
 
 function addLogEntry(entry: ToolLogEntry) {
-  toolLogs.unshift(entry);
-  if (toolLogs.length > MAX_LOGS) {
-    toolLogs.pop();
+  const existingIndex = toolLogs.findIndex((l) => l.id === entry.id);
+  if (existingIndex !== -1) {
+    toolLogs[existingIndex] = entry;
+  } else {
+    toolLogs.unshift(entry);
+    if (toolLogs.length > MAX_LOGS) {
+      toolLogs.pop();
+    }
   }
-  controlCenterEvents.emit("log", entry);
+  controlCenterEvents.emit("log", {
+    ...entry,
+    stats: { ...toolStats },
+    callCount: toolMetadata[entry.tool]?.callCount ?? 0,
+  });
 }
 
 function summarizeResult(result: unknown): string {

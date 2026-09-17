@@ -1,7 +1,6 @@
 import type { FastMCP } from "fastmcp";
 import { z } from "zod";
-import { WORKSPACE_DIR } from "../config.js";
-import { execAsync } from "../utils.js";
+import { execAsync, resolveSafePath, getPrimaryWorkspace } from "../utils.js";
 
 export function registerExecuteCommandTool(server: FastMCP) {
   server.addTool({
@@ -9,12 +8,14 @@ export function registerExecuteCommandTool(server: FastMCP) {
     description: "Execute a shell command in the terminal. Automatically times out after 30 seconds to prevent hanging.",
     parameters: z.object({
       command: z.string().describe("The shell command to execute"),
+      cwd: z.string().optional().describe("Directory in which to execute the command. Must be an authorized workspace path. Defaults to primary workspace."),
     }),
-    execute: async ({ command }) => {
+    execute: async ({ command, cwd }) => {
       try {
-        // Executes strictly within your allowed WORKSPACE_DIR sandbox
+        const targetCwd = resolveSafePath(cwd || getPrimaryWorkspace());
+
         const { stdout, stderr } = await execAsync(command, {
-          cwd: WORKSPACE_DIR,
+          cwd: targetCwd,
           timeout: 30000, // Kill process if it takes longer than 30 seconds
           maxBuffer: 1024 * 1024 * 5, // Allow up to 5MB of output
         });

@@ -12,8 +12,10 @@ import { registerSearchFilesByNameTool } from "./search_files_by_name.js";
 import { registerGetFileInfoTool } from "./get_file_info.js";
 import { registerInsertAtLineTool } from "./insert_at_line.js";
 import { registerGitDiffTool } from "./git_diff.js";
+import { registerAvailableDirectoriesTool } from "./available_directories.js";
 
 export function registerAllTools(server: FastMCP) {
+  registerAvailableDirectoriesTool(server);
   registerListDirectoryTool(server);
   registerReadFileTool(server);
   registerWriteFileTool(server);
@@ -30,6 +32,7 @@ export function registerAllTools(server: FastMCP) {
 }
 
 export {
+  registerAvailableDirectoriesTool,
   registerListDirectoryTool,
   registerReadFileTool,
   registerWriteFileTool,
