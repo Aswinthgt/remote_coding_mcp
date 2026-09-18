@@ -39,6 +39,7 @@
   "type": "module",
   "dependencies": {
     "fastmcp": "^4.19.0",
+    "jose": "^6.2.12",
     "zod": "^4.5.4"
   },
   "devDependencies": {

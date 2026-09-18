@@ -39,14 +39,15 @@ That's it. The server starts on port `8080` with the workspace locked to your ho
 ### With options
 
 ```bash
-npx remote-coding-mcp -p 3000 -w "D:/my-project" -t my-secret-token
+npx remote-coding-mcp -p 3000 -w "D:/my-project" --enable-auth
 ```
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
 | `--port` | `-p` | `8080` | Port to listen on |
 | `--workspace` | `-w` | `os.homedir()` | Root folder the AI is allowed to access |
-| `--token` | `-t` | *(none)* | Bearer token for auth (no auth if omitted) |
+| `--enable-auth` | *(none)* | `false` | Enable JWT authentication (generates and displays token on startup) |
+| `--enable-oauth` | *(none)* | `false` | Enable OAuth 2.0 (generates Client ID & Secret for ChatGPT / Gemini) |
 
 ---
 
@@ -65,8 +66,7 @@ Designed with a high-tech terminal UI, the Control Center puts you in complete c
 - **🛡️ Safe Mode Preset**: One-click lock down — instantly disables shell execution, file deletion, and file writing tools while keeping read and search tools active.
 - **Smart Permission Interception**: If an AI agent attempts to invoke a tool you've disabled, execution is blocked and the AI receives:
   > *"Error: The tool '\<tool\>' has been disabled by the user in the Control Center. Please ask the user for permission to enable this tool before proceeding."*
-- **Live Audit Console**: Stream real-time tool execution logs, runtime durations, call parameters, and error traces over Server-Sent Events (SSE).
-- **Secure Access**: If `--token` is set, unlock the dashboard using your Bearer token or append `?token=<your-token>`.
+- **Secure Access**: When `--enable-auth` or `--enable-oauth` is set, a cryptographically signed JWT token is displayed in your terminal. Use it to unlock the dashboard or append `?token=<your-jwt-token>`.
 
 ---
 
@@ -99,7 +99,7 @@ Your **MCP endpoint** is: `https://abc123.ngrok-free.app/mcp`
 1. Open [Google AI Studio](https://aistudio.google.com) or Gemini Spark.
 2. Go to **Connect Apps** → **Add MCP Server**.
 3. Paste your public URL with `/mcp` at the end — e.g. `https://abc123.ngrok-free.app/mcp`.
-4. If you set a token: add header `Authorization: Bearer <your-token>`.
+4. If authentication is enabled: add header `Authorization: Bearer <your-jwt-token>`.
 5. Start chatting — the AI can now code on your machine.
 
 ### Claude (Desktop / API)
@@ -112,12 +112,27 @@ Add to your `claude_desktop_config.json`:
     "remote-coder": {
       "url": "https://abc123.ngrok-free.app/mcp",
       "headers": {
-        "Authorization": "Bearer my-secret-token"
+        "Authorization": "Bearer <your-jwt-token>"
       }
     }
   }
 }
 ```
+
+### ChatGPT / Gemini (OAuth 2.0)
+
+When launched with `--enable-oauth`, the server generates OAuth 2.0 client credentials:
+
+```bash
+npx remote-coding-mcp --enable-oauth
+```
+
+In your custom GPT or AI provider configuration:
+- **Client ID**: Paste the Client ID shown in the terminal.
+- **Client Secret**: Paste the Client Secret shown in the terminal.
+- **Token URL**: `https://<your-public-url>/oauth/token` (or `http://localhost:8080/oauth/token` if local).
+
+---
 
 ### Any MCP-compatible client
 
@@ -154,8 +169,9 @@ The AI gets access to these tools on your machine:
 ## Security
 
 - The AI can **only access files inside approved workspace directories** (primary + added workspaces) — path traversal attacks are blocked.
-- Pass `--token` to require a `Bearer` token on every request.
-- Without `--token`, the server accepts all requests (fine for local/trusted networks).
+- Pass `--enable-auth` to require a secure JWT token on every request.
+- Pass `--enable-oauth` to enable OAuth 2.0 authentication with dynamic Client ID & Secret for AI providers.
+- Without `--enable-auth` or `--enable-oauth`, the server accepts all requests (fine for local/trusted networks).
 - **Fine-Grained Tool Permissions**: Use the Control Center (`/control-center`) to toggle high-risk tools (e.g. `execute_command` or `delete_file`) on/off or activate **Safe Mode** anytime.
 
 ---
