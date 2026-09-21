@@ -2,7 +2,7 @@ import type { Hono } from "hono";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { PORT, AUTH_TOKEN } from "./config.js";
+import { PORT, ENABLE_AUTH } from "./config.js";
 import {
   toolStates,
   toolMetadata,
@@ -115,7 +115,7 @@ export function registerControlCenter(app: Hono): void {
       config: {
         port: PORT,
         workspace: getPrimaryWorkspace(),
-        hasAuth: Boolean(AUTH_TOKEN),
+        hasAuth: ENABLE_AUTH,
         version,
       },
     });

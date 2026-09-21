@@ -1,6 +1,6 @@
 {
   "name": "remote-coding-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A zero-config MCP server that lets any AI (Gemini, Claude, GPT) read and write code directly on your machine over the internet via ngrok or VS Code port forwarding.",
   "main": "dist/server.js",
   "bin": {
@@ -39,6 +39,7 @@
   "type": "module",
   "dependencies": {
     "fastmcp": "^4.19.0",
+    "jose": "^6.2.12",
     "zod": "^4.5.4"
   },
   "devDependencies": {

@@ -39,14 +39,16 @@ That's it. The server starts on port `8080` with the workspace locked to your ho
 ### With options
 
 ```bash
-npx remote-coding-mcp -p 3000 -w "D:/my-project" -t my-secret-token
+npx remote-coding-mcp -p 3000 -w "D:/my-project" --enable-auth
 ```
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
 | `--port` | `-p` | `8080` | Port to listen on |
 | `--workspace` | `-w` | `os.homedir()` | Root folder the AI is allowed to access |
-| `--token` | `-t` | *(none)* | Bearer token for auth (no auth if omitted) |
+| `--enable-auth` | *(none)* | `false` | Enable JWT authentication (generates and displays token on startup) |
+| `--enable-oauth <url>` | *(none)* | `false` | Enable OAuth 2.1 and publish discovery metadata using the supplied public server URL |
+| `--oauth-redirect-uri <url>` | *(none)* | Antigravity callback | Redirect URI for the generated startup OAuth client |
 
 ---
 
@@ -65,8 +67,7 @@ Designed with a high-tech terminal UI, the Control Center puts you in complete c
 - **🛡️ Safe Mode Preset**: One-click lock down — instantly disables shell execution, file deletion, and file writing tools while keeping read and search tools active.
 - **Smart Permission Interception**: If an AI agent attempts to invoke a tool you've disabled, execution is blocked and the AI receives:
   > *"Error: The tool '\<tool\>' has been disabled by the user in the Control Center. Please ask the user for permission to enable this tool before proceeding."*
-- **Live Audit Console**: Stream real-time tool execution logs, runtime durations, call parameters, and error traces over Server-Sent Events (SSE).
-- **Secure Access**: If `--token` is set, unlock the dashboard using your Bearer token or append `?token=<your-token>`.
+- **Secure Access**: When `--enable-auth` or `--enable-oauth` is set, a cryptographically signed JWT token is displayed in your terminal. Use it to unlock the dashboard or append `?token=<your-jwt-token>`.
 
 ---
 
@@ -99,7 +100,7 @@ Your **MCP endpoint** is: `https://abc123.ngrok-free.app/mcp`
 1. Open [Google AI Studio](https://aistudio.google.com) or Gemini Spark.
 2. Go to **Connect Apps** → **Add MCP Server**.
 3. Paste your public URL with `/mcp` at the end — e.g. `https://abc123.ngrok-free.app/mcp`.
-4. If you set a token: add header `Authorization: Bearer <your-token>`.
+4. If authentication is enabled: add header `Authorization: Bearer <your-jwt-token>`.
 5. Start chatting — the AI can now code on your machine.
 
 ### Claude (Desktop / API)
@@ -112,12 +113,51 @@ Add to your `claude_desktop_config.json`:
     "remote-coder": {
       "url": "https://abc123.ngrok-free.app/mcp",
       "headers": {
-        "Authorization": "Bearer my-secret-token"
+        "Authorization": "Bearer <your-jwt-token>"
       }
     }
   }
 }
 ```
+
+### ChatGPT / Gemini (OAuth 2.1)
+
+OAuth is enabled with your public MCP server URL:
+
+```bash
+npx remote-coding-mcp --enable-oauth https://<your-public-url>
+```
+
+For example:
+
+```bash
+npx remote-coding-mcp --enable-oauth https://abc123.ngrok-free.app
+```
+
+The server publishes:
+- Protected Resource Metadata: `https://<your-public-url>/.well-known/oauth-protected-resource`
+- Authorization Server Metadata: `https://<your-public-url>/.well-known/oauth-authorization-server`
+- Dynamic Client Registration: `https://<your-public-url>/oauth/register`
+- Authorization endpoint: `https://<your-public-url>/oauth/authorize`
+- Token endpoint: `https://<your-public-url>/oauth/token`
+
+The OAuth flow uses Authorization Code + PKCE (S256). You can use either of these client credential modes:
+
+- **Pre-registered client:** when the server starts with `--enable-oauth`, it generates a Client ID and Client Secret and prints them in the terminal. Enter those credentials in an MCP client that supports manual OAuth credentials.
+- **Dynamic Client Registration:** clients that support DCR can register themselves through `/oauth/register`.
+
+The generated startup client uses the Antigravity hosted OAuth callback by default:
+`https://antigravity.google/oauth-callback`
+
+For another OAuth client with a different callback, provide it explicitly:
+
+```bash
+npx remote-coding-mcp --enable-oauth https://abc123.ngrok-free.app --oauth-redirect-uri https://your-client.example/callback
+```
+
+The authorization flow is Authorization Code + PKCE (S256): the client opens the authorization page, receives a temporary authorization code, exchanges it for a Bearer access token, and then uses that token for `/mcp`.
+
+---
 
 ### Any MCP-compatible client
 
@@ -154,8 +194,9 @@ The AI gets access to these tools on your machine:
 ## Security
 
 - The AI can **only access files inside approved workspace directories** (primary + added workspaces) — path traversal attacks are blocked.
-- Pass `--token` to require a `Bearer` token on every request.
-- Without `--token`, the server accepts all requests (fine for local/trusted networks).
+- Pass `--enable-auth` to require a secure JWT token on every request.
+- Pass `--enable-oauth https://<your-public-url>` to enable OAuth 2.1 authentication, discovery metadata, Dynamic Client Registration, and Authorization Code + PKCE.
+- Without `--enable-auth` or `--enable-oauth`, the server accepts all requests (fine for local/trusted networks).
 - **Fine-Grained Tool Permissions**: Use the Control Center (`/control-center`) to toggle high-risk tools (e.g. `execute_command` or `delete_file`) on/off or activate **Safe Mode** anytime.
 
 ---
