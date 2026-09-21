@@ -1,25 +1,30 @@
 #!/usr/bin/env node
 import { FastMCP } from "fastmcp";
-import { PORT, ENABLE_AUTH, ENABLE_OAUTH, WORKSPACE_DIR } from "./config.js";
+import { PORT, ENABLE_AUTH, ENABLE_OAUTH, OAUTH_BASE_URL, OAUTH_REDIRECT_URI, WORKSPACE_DIR } from "./config.js";
 import {
   initializeAuth,
   verifyAuthToken,
   getAuthToken,
   extractToken,
-  getClientId,
-  getClientSecret,
 } from "./auth.js";
 import { setupToolControl } from "./toolControl.js";
 import { registerControlCenter } from "./controlCenter.js";
-import { registerOAuth, isOAuthRoute } from "./oauth.js";
+import { registerOAuth, isOAuthRoute, verifyOAuthAccessToken } from "./oauth.js";
+import { initializeStartupClient } from "./service/oauth.js";
 import { registerAllTools } from "./tools/index.js";
 
 // ==========================================
 // INITIALIZE AUTHENTICATION IF ENABLED
 // ==========================================
 if (ENABLE_AUTH) {
-  await initializeAuth(ENABLE_OAUTH);
+  await initializeAuth();
 }
+
+// Generate one server-owned OAuth client when OAuth is enabled. This client
+// is registered in the same in-memory registry used by /oauth/register.
+const startupOAuthClient = ENABLE_OAUTH && OAUTH_BASE_URL
+  ? initializeStartupClient(OAUTH_REDIRECT_URI!)
+  : null;
 
 // Build FastMCP options — only attach `authenticate` when auth is enabled.
 // Without this, some MCP clients detect the handler and attempt OAuth discovery even in open mode.
@@ -32,10 +37,20 @@ const mcpAuthHandler = ENABLE_AUTH
       const queryToken = url.searchParams.get("token");
 
       const token = extractToken(authHeader, queryToken);
-      if (!token || !(await verifyAuthToken(token))) {
+      const validJwt = token ? await verifyAuthToken(token) : false;
+      const validOAuth = token ? verifyOAuthAccessToken(token) : false;
+
+      if (!token || (!validJwt && !validOAuth)) {
+        const headers: Record<string, string> = {};
+        if (ENABLE_OAUTH && OAUTH_BASE_URL) {
+          headers["WWW-Authenticate"] =
+            `Bearer resource_metadata="${OAUTH_BASE_URL}/.well-known/oauth-protected-resource"`;
+        }
+
         throw new Response("Unauthorized: Invalid or missing authentication token.", {
           status: 401,
           statusText: "Unauthorized",
+          headers,
         });
       }
 
@@ -83,13 +98,41 @@ app.use("*", async (c, next) => {
 
   if (!token) {
     const error = "Unauthorized: Missing authentication token.";
-    return isControlCenterApi ? c.json({ error }, 401) : c.text(error, 401);
+
+    if (isControlCenterApi) {
+      return c.json({ error }, 401);
+    }
+
+    if (ENABLE_OAUTH && OAUTH_BASE_URL) {
+      c.header(
+        "WWW-Authenticate",
+        `Bearer resource_metadata="${OAUTH_BASE_URL}/.well-known/oauth-protected-resource"`
+      );
+    }
+
+    return c.text(error, 401);
   }
 
-  const isValid = await verifyAuthToken(token);
-  if (!isValid) {
+  const validJwt = await verifyAuthToken(token);
+  const validOAuth = !validJwt && ENABLE_OAUTH
+    ? verifyOAuthAccessToken(token)
+    : false;
+
+  if (!validJwt && !validOAuth) {
     const error = "Unauthorized: Invalid or expired authentication token.";
-    return isControlCenterApi ? c.json({ error }, 401) : c.text(error, 401);
+
+    if (isControlCenterApi) {
+      return c.json({ error }, 401);
+    }
+
+    if (ENABLE_OAUTH && OAUTH_BASE_URL) {
+      c.header(
+        "WWW-Authenticate",
+        `Bearer resource_metadata="${OAUTH_BASE_URL}/.well-known/oauth-protected-resource"`
+      );
+    }
+
+    return c.text(error, 401);
   }
 
   await next();
@@ -116,21 +159,28 @@ console.log(`🚀 Remote Coder MCP Server running on port ${PORT}`);
 console.log(`🔒 Workspace locked to: ${WORKSPACE_DIR}`);
 
 const token = getAuthToken();
-const clientId = getClientId();
-const clientSecret = getClientSecret();
 
-if (ENABLE_OAUTH && clientId && clientSecret && token) {
+if (ENABLE_OAUTH && token) {
   console.log(`\n================================================================================`);
-  console.log(`🔐 OAUTH 2.0 & AUTHENTICATION ENABLED`);
+  console.log(`🔐 OAUTH 2.1 & AUTHENTICATION ENABLED`);
   console.log(`--------------------------------------------------------------------------------`);
-  console.log(`🆔 OAuth Client ID:`);
-  console.log(clientId);
+  console.log(`🌐 OAuth Base URL:`);
+  console.log(OAUTH_BASE_URL);
   console.log(``);
-  console.log(`🔒 OAuth Client Secret:`);
-  console.log(clientSecret);
+  console.log(`🔑 Pre-registered OAuth Client ID:`);
+  console.log(startupOAuthClient?.clientId ?? "");
+  console.log(``);
+  console.log(`🔐 Pre-registered OAuth Client Secret:`);
+  console.log(startupOAuthClient?.clientSecret ?? "");
+  console.log(``);
+  console.log(`↩️  Registered Redirect URI:`);
+  console.log(OAUTH_REDIRECT_URI);
+  console.log(``);
+  console.log(`🌐 OAuth Authorization Endpoint:`);
+  console.log(`${OAUTH_BASE_URL}/oauth/authorize`);
   console.log(``);
   console.log(`🌐 OAuth Token Endpoint:`);
-  console.log(`http://localhost:${PORT}/oauth/token`);
+  console.log(`${OAUTH_BASE_URL}/oauth/token`);
   console.log(``);
   console.log(`🔑 Direct JWT Access Token:`);
   console.log(token);
@@ -141,10 +191,10 @@ if (ENABLE_OAUTH && clientId && clientSecret && token) {
   console.log(`🔌 MCP Server URL:`);
   console.log(`http://localhost:${PORT}/mcp`);
   console.log(``);
-  console.log(`🤖 For AI Providers (ChatGPT, Gemini, etc.):`);
-  console.log(`• Client ID:     ${clientId}`);
-  console.log(`• Client Secret: ${clientSecret}`);
-  console.log(`• Token URL:     http://localhost:${PORT}/oauth/token`);
+  console.log(`🤖 OAuth clients register through:`);
+  console.log(`${OAUTH_BASE_URL}/oauth/register`);
+  console.log(``);
+  console.log(`• Token URL: ${OAUTH_BASE_URL}/oauth/token`);
   console.log(`================================================================================\n`);
 } else if (ENABLE_AUTH && token) {
   console.log(`\n================================================================================`);
@@ -166,5 +216,5 @@ if (ENABLE_OAUTH && clientId && clientSecret && token) {
 } else {
   console.log(`🔌 MCP Server URL: http://localhost:${PORT}/mcp`);
   console.log(`🎛️  Control Center available at: http://localhost:${PORT}/control-center`);
-  console.log(`🔓 Authentication: DISABLED (Pass --enable-auth for JWT, or --enable-oauth for OAuth 2.0)`);
+  console.log(`🔓 Authentication: DISABLED (Pass --enable-auth for JWT, or --enable-oauth for OAuth 2.1)`);
 }

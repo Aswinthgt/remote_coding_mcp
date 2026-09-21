@@ -6,15 +6,11 @@ export const PROJECT_IDENTITY = "remote-coding-mcp";
 let serverJwtToken: string | null = null;
 let activeRandomId: string | null = null;
 let signingSecret: Uint8Array | null = null;
-let oauthClientId: string | null = null;
-let oauthClientSecret: string | null = null;
-
 /**
  * Initializes server authentication by generating an ephemeral session secret,
  * a unique random ID, and a signed JWT containing project identity verification.
- * Optionally generates OAuth client_id and client_secret if enableOAuth is true.
  */
-export async function initializeAuth(enableOAuth = false): Promise<string> {
+export async function initializeAuth(): Promise<string> {
   // Generate a cryptographically secure 256-bit secret key for this server instance
   signingSecret = crypto.getRandomValues(new Uint8Array(32));
 
@@ -31,39 +27,7 @@ export async function initializeAuth(enableOAuth = false): Promise<string> {
     .setIssuedAt()
     .sign(signingSecret);
 
-  if (enableOAuth) {
-    oauthClientId = "mcp_" + crypto.randomBytes(8).toString("hex");
-    oauthClientSecret = "sec_" + crypto.randomBytes(24).toString("hex");
-  }
-
   return serverJwtToken;
-}
-
-/**
- * Returns the generated OAuth client ID for the current session.
- */
-export function getClientId(): string | null {
-  return oauthClientId;
-}
-
-/**
- * Returns the generated OAuth client secret for the current session.
- */
-export function getClientSecret(): string | null {
-  return oauthClientSecret;
-}
-
-/**
- * Verifies provided client credentials against the active session OAuth credentials.
- */
-export function verifyClientCredentials(id: string, secret: string): boolean {
-  if (!oauthClientId || !oauthClientSecret) {
-    return false;
-  }
-  if (!id || !secret) {
-    return false;
-  }
-  return id.trim() === oauthClientId && secret.trim() === oauthClientSecret;
 }
 
 /**

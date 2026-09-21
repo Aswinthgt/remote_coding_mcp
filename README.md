@@ -47,7 +47,8 @@ npx remote-coding-mcp -p 3000 -w "D:/my-project" --enable-auth
 | `--port` | `-p` | `8080` | Port to listen on |
 | `--workspace` | `-w` | `os.homedir()` | Root folder the AI is allowed to access |
 | `--enable-auth` | *(none)* | `false` | Enable JWT authentication (generates and displays token on startup) |
-| `--enable-oauth` | *(none)* | `false` | Enable OAuth 2.0 (generates Client ID & Secret for ChatGPT / Gemini) |
+| `--enable-oauth <url>` | *(none)* | `false` | Enable OAuth 2.1 and publish discovery metadata using the supplied public server URL |
+| `--oauth-redirect-uri <url>` | *(none)* | Antigravity callback | Redirect URI for the generated startup OAuth client |
 
 ---
 
@@ -119,18 +120,42 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-### ChatGPT / Gemini (OAuth 2.0)
+### ChatGPT / Gemini (OAuth 2.1)
 
-When launched with `--enable-oauth`, the server generates OAuth 2.0 client credentials:
+OAuth is enabled with your public MCP server URL:
 
 ```bash
-npx remote-coding-mcp --enable-oauth
+npx remote-coding-mcp --enable-oauth https://<your-public-url>
 ```
 
-In your custom GPT or AI provider configuration:
-- **Client ID**: Paste the Client ID shown in the terminal.
-- **Client Secret**: Paste the Client Secret shown in the terminal.
-- **Token URL**: `https://<your-public-url>/oauth/token` (or `http://localhost:8080/oauth/token` if local).
+For example:
+
+```bash
+npx remote-coding-mcp --enable-oauth https://abc123.ngrok-free.app
+```
+
+The server publishes:
+- Protected Resource Metadata: `https://<your-public-url>/.well-known/oauth-protected-resource`
+- Authorization Server Metadata: `https://<your-public-url>/.well-known/oauth-authorization-server`
+- Dynamic Client Registration: `https://<your-public-url>/oauth/register`
+- Authorization endpoint: `https://<your-public-url>/oauth/authorize`
+- Token endpoint: `https://<your-public-url>/oauth/token`
+
+The OAuth flow uses Authorization Code + PKCE (S256). You can use either of these client credential modes:
+
+- **Pre-registered client:** when the server starts with `--enable-oauth`, it generates a Client ID and Client Secret and prints them in the terminal. Enter those credentials in an MCP client that supports manual OAuth credentials.
+- **Dynamic Client Registration:** clients that support DCR can register themselves through `/oauth/register`.
+
+The generated startup client uses the Antigravity hosted OAuth callback by default:
+`https://antigravity.google/oauth-callback`
+
+For another OAuth client with a different callback, provide it explicitly:
+
+```bash
+npx remote-coding-mcp --enable-oauth https://abc123.ngrok-free.app --oauth-redirect-uri https://your-client.example/callback
+```
+
+The authorization flow is Authorization Code + PKCE (S256): the client opens the authorization page, receives a temporary authorization code, exchanges it for a Bearer access token, and then uses that token for `/mcp`.
 
 ---
 
@@ -170,7 +195,7 @@ The AI gets access to these tools on your machine:
 
 - The AI can **only access files inside approved workspace directories** (primary + added workspaces) — path traversal attacks are blocked.
 - Pass `--enable-auth` to require a secure JWT token on every request.
-- Pass `--enable-oauth` to enable OAuth 2.0 authentication with dynamic Client ID & Secret for AI providers.
+- Pass `--enable-oauth https://<your-public-url>` to enable OAuth 2.1 authentication, discovery metadata, Dynamic Client Registration, and Authorization Code + PKCE.
 - Without `--enable-auth` or `--enable-oauth`, the server accepts all requests (fine for local/trusted networks).
 - **Fine-Grained Tool Permissions**: Use the Control Center (`/control-center`) to toggle high-risk tools (e.g. `execute_command` or `delete_file`) on/off or activate **Safe Mode** anytime.
 
